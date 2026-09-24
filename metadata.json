@@ -1,6 +1,6 @@
 {
   "name": "WhiskerPal",
-  "description": "WhiskerPal: Hinglish Talking Tom - Voice repeating virtual pet with Web Speech mic input, touch body reactions, and Hinglish dialogue.",
+  "description": "WhiskerPal: Hinglish Talking Tom - Interactive desktop web app with Web Speech mic input, squeaky voice repeating, desktop keyboard shortcuts, and Hinglish dialogue.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,0 +1,19 @@
+{
+  "name": "whiskerpal-hinglish-talking-tom",
+  "version": "1.0.0",
+  "description": "WhiskerPal: Hinglish Talking Tom - Interactive Desktop Web Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "talking-tom",
+    "virtual-pet",
+    "web-audio",
+    "speech-synthesis",
+    "hinglish"
+  ],
+  "author": "WhiskerPal",
+  "license": "MIT"
+}
