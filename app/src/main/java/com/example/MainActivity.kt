@@ -3,6 +3,7 @@ package com.example
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.speech.tts.TextToSpeech
+import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -107,6 +108,7 @@ fun WhiskerPalWebView(
       .navigationBarsPadding(),
     factory = { ctx ->
       WebView(ctx).apply {
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         settings.apply {
           javaScriptEnabled = true
           domStorageEnabled = true
