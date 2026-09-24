@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WhiskerPal: Hinglish Talking Tom</title>
+  <style>
+    :root {
+      --bg-gradient-day: linear-gradient(135deg, #ffd1dc 0%, #d4eaf7 50%, #fbe7c6 100%);
+      --bg-gradient-night: linear-gradient(135deg, #090c15 0%, #151c33 50%, #0c0e18 100%);
+      --card-bg-day: rgba(255, 255, 255, 0.88);
+      --card-bg-night: rgba(23, 30, 50, 0.9);
+      --accent-pink: #ff4071;
+      --accent-yellow: #ffb703;
+      --accent-blue: #0284c7;
+      --accent-green: #10b981;
+      --text-dark: #1e293b;
+      --text-light: #f1f5f9;
+      --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.14);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+
+    body {
+      background: var(--bg-gradient-day);
+      color: var(--text-dark);
+      transition: background 0.6s ease, color 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: stretch;
+    }
+
+    body.night-mode {
+      background: var(--bg-gradient-night);
+      color: var(--text-light);
+    }
+
+    /* Main Container */
+    .app-container {
+      width: 100%;
+      max-width: 1200px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 18px;
+      position: relative;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 4px 14px 4px;
+      z-index: 10;
+    }
+
+    .branding {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.65rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ff4071, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tagline {
+      font-size: 0.82rem;
+      font-weight: 700;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: var(--card-bg-day);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+      color: inherit;
+    }
+
+    body.night-mode .icon-btn {
+      background: var(--card-bg-night);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .icon-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Mic Active Pulsing Button */
+    .btn-mic-toggle {
+      background: linear-gradient(135deg, #ff4071, #ff6b8b);
+      color: #fff;
+      border: none;
+      padding: 0 16px;
+      border-radius: 24px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(255, 64, 113, 0.35);
+      transition: all 0.25s;
+    }
+
+    .btn-mic-toggle.active {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.7);
+      animation: micPulse 1.2s infinite;
+    }
+
+    @keyframes micPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.04); box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Layout: Side by Side on wide screens */
+    .game-grid {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 2;
+    }
+
+    @media (min-width: 800px) {
+      .game-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        gap: 32px;
+        align-items: center;
+      }
+    }
+
+    /* Pet Stage */
+    .pet-stage {
+      position: relative;
+      width: 100%;
+      min-height: 380px;
+      background: var(--card-bg-day);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: var(--radius-xl);
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px 36px 16px;
+      overflow: hidden;
+      transition: background 0.4s, border-color 0.4s;
+    }
+
+    body.night-mode .pet-stage {
+      background: var(--card-bg-night);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Speech Bubble */
+    .speech-bubble {
+      background: #ffffff;
+      color: #1e293b;
+      padding: 14px 22px;
+      border-radius: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      max-width: 90%;
+      min-width: 220px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.35;
+      position: relative;
+      margin-bottom: 24px;
+      border: 3px solid #ff4071;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: floatBubble 3s ease-in-out infinite;
+      z-index: 10;
+    }
+
+    body.night-mode .speech-bubble {
+      background: #1e293b;
+      color: #f8fafc;
+      border-color: #8b5cf6;
+    }
+
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-top: 12px solid #ff4071;
+    }
+
+    body.night-mode .speech-bubble::after {
+      border-top-color: #8b5cf6;
+    }
+
+    @keyframes floatBubble {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* Listening Badge */
+    .listening-status {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      color: #10b981;
+      font-weight: 800;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .listening-status.active {
+      display: flex;
+    }
+
+    .listening-wave {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+      height: 14px;
+    }
+
+    .listening-wave span {
+      width: 3px;
+      height: 100%;
+      background: #10b981;
+      border-radius: 2px;
+      animation: waveBar 0.8s ease-in-out infinite alternate;
+    }
+
+    .listening-wave span:nth-child(2) { animation-delay: 0.2s; }
+    .listening-wave span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes waveBar {
+      0% { height: 4px; }
+      100% { height: 14px; }
+    }
+
+    /* Interactive Talking Tom Character & Hit Zones */
+    .character-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .shadow-oval {
+      width: 200px;
+      height: 38px;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 70%);
+      position: absolute;
+      bottom: -6px;
+      border-radius: 50%;
+      z-index: 1;
+    }
+
+    body.night-mode .shadow-oval {
+      background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.25) 0%, rgba(0,0,0,0) 70%);
+    }
+
+    .tom-character {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.15s ease-out;
+      transform-origin: center bottom;
+      animation: tomIdle 3.5s ease-in-out infinite;
+    }
+
+    @keyframes tomIdle {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-7px) scale(1.02, 0.98); }
+    }
+
+    /* Head Hitbox & Face */
+    .zone-head {
+      position: relative;
+      width: 180px;
+      height: 155px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 50% 50% 45% 45%;
+      transition: transform 0.15s;
+    }
+
+    .tom-face {
+      font-size: 8rem;
+      line-height: 1;
+      display: inline-block;
+      transition: transform 0.12s ease;
+      filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.15));
+    }
+
+    /* Body & Tummy Zone */
+    .zone-tummy {
+      position: relative;
+      width: 140px;
+      height: 100px;
+      margin-top: -24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      background: linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 100%);
+      border-radius: 40px 40px 30px 30px;
+      border: 4px solid #94a3b8;
+      box-shadow: inset 0 -4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.15s;
+    }
+
+    body.night-mode .zone-tummy {
+      background: linear-gradient(180deg, #475569 0%, #334155 100%);
+      border-color: #64748b;
+    }
+
+    .tummy-patch {
+      width: 75px;
+      height: 60px;
+      background: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+      animation: heartGlow 2s infinite alternate;
+    }
+
+    body.night-mode .tummy-patch {
+      background: #e2e8f0;
+    }
+
+    @keyframes heartGlow {
+      0% { transform: scale(0.95); }
+      100% { transform: scale(1.05); }
+    }
+
+    /* Feet & Tail Zone */
+    .zone-feet {
+      display: flex;
+      gap: 30px;
+      margin-top: -8px;
+      cursor: pointer;
+      z-index: 3;
+    }
+
+    .foot-paw {
+      font-size: 2.2rem;
+      transition: transform 0.15s;
+    }
+
+    /* Touch Zone Labels (subtle cues) */
+    .zone-head::after, .zone-tummy::after, .zone-feet::after {
+      content: attr(data-hint);
+      position: absolute;
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: rgba(0, 0, 0, 0.4);
+      background: rgba(255, 255, 255, 0.8);
+      padding: 2px 8px;
+      border-radius: 10px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .character-wrap:hover .zone-head::after,
+    .character-wrap:hover .zone-tummy::after,
+    .character-wrap:hover .zone-feet::after {
+      opacity: 0.9;
+    }
+
+    .zone-head::after { top: 0px; }
+    .zone-tummy::after { bottom: 6px; }
+    .zone-feet::after { bottom: -18px; }
+
+    /* Animations: Slap / Purr / Jump / Talking */
+    .tom-character.slapped {
+      animation: tomSlap 0.55s ease-in-out !important;
+    }
+
+    @keyframes tomSlap {
+      0% { transform: rotate(0deg) scale(1); }
+      20% { transform: rotate(-18deg) scale(1.1) translateX(-18px); }
+      40% { transform: rotate(15deg) scale(0.95) translateX(14px); }
+      60% { transform: rotate(-10deg) scale(1.03) translateX(-8px); }
+      80% { transform: rotate(6deg) scale(0.98); }
+      100% { transform: rotate(0deg) scale(1); }
+    }
+
+    .tom-character.purring {
+      animation: tomPurr 0.35s ease-in-out 3 !important;
+    }
+
+    @keyframes tomPurr {
+      0%, 100% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.08, 0.94) translateY(4px); }
+    }
+
+    .tom-character.jumped {
+      animation: tomJump 0.65s cubic-bezier(0.28, 0.84, 0.42, 1) !important;
+    }
+
+    @keyframes tomJump {
+      0% { transform: scale(1, 1) translateY(0); }
+      25% { transform: scale(1.25, 0.75) translateY(0); }
+      50% { transform: scale(0.85, 1.2) translateY(-60px); }
+      75% { transform: scale(1.15, 0.85) translateY(0); }
+      100% { transform: scale(1, 1) translateY(0); }
+    }
+
+    .tom-character.talking {
+      animation: tomTalk 0.28s ease-in-out infinite alternate !important;
+    }
+
+    @keyframes tomTalk {
+      0% { transform: scale(1, 1) translateY(0); }
+      100% { transform: scale(1.05, 0.96) translateY(-8px); }
+    }
+
+    .tom-character.sleeping-anim {
+      animation: tomSleep 2.5s ease-in-out infinite !important;
+    }
+
+    @keyframes tomSleep {
+      0%, 100% { transform: scale(0.96, 0.96) translateY(6px); }
+      50% { transform: scale(1.02, 0.99) translateY(0px); }
+    }
+
+    /* Floating Hit Spark / Particles */
+    .particle-holder {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 15;
+    }
+
+    .fx-item {
+      position: absolute;
+      font-size: 2.2rem;
+      animation: fxFly 1.3s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes fxFly {
+      0% { transform: translate(0, 0) scale(0.5); opacity: 1; }
+      50% { transform: translate(var(--dx), -45px) scale(1.3); opacity: 0.9; }
+      100% { transform: translate(var(--dx), -100px) scale(0.8); opacity: 0; }
+    }
+
+    /* Football Mini Game Field inside stage */
+    .football-field {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(16, 185, 129, 0.12);
+      border-radius: var(--radius-xl);
+      z-index: 8;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      flex-direction: column;
+    }
+
+    .football-field.active {
+      display: flex;
+    }
+
+    .mini-goal {
+      background: rgba(255, 255, 255, 0.9);
+      border: 3px dashed #10b981;
+      padding: 6px 18px;
+      border-radius: 12px;
+      font-weight: 900;
+      color: #065f46;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .football-item {
+      font-size: 3.2rem;
+      cursor: pointer;
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+      animation: ballBounce 0.8s ease-in-out infinite alternate;
+      transition: all 0.25s;
+    }
+
+    .football-item:active {
+      transform: scale(1.3);
+    }
+
+    @keyframes ballBounce {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-30px) rotate(45deg); }
+    }
+
+    /* Right Section: Controls */
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Status Meters Card */
+    .status-card {
+      background: var(--card-bg-day);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    body.night-mode .status-card {
+      background: var(--card-bg-night);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .meter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .meter-label {
+      width: 105px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meter-track {
+      flex: 1;
+      height: 14px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    body.night-mode .meter-track {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .meter-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.35s ease;
+    }
+
+    .fill-milk { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .fill-happy { background: linear-gradient(90deg, #ff4071, #f472b6); }
+    .fill-energy { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+
+    .meter-val {
+      width: 42px;
+      text-align: right;
+      font-size: 0.85rem;
+      font-weight: 900;
+      opacity: 0.85;
+    }
+
+    /* Actions Grid */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    @media (min-width: 500px) {
+      .actions-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 10px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: var(--card-bg-day);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: inherit;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body.night-mode .action-btn {
+      background: var(--card-bg-night);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .action-btn .btn-ico {
+      font-size: 1.8rem;
+      transition: transform 0.2s;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .action-btn:hover .btn-ico {
+      transform: scale(1.18);
+    }
+
+    .action-btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-feed-milk { border-bottom: 4px solid #f59e0b; }
+    .btn-pet-tummy { border-bottom: 4px solid #ff4071; }
+    .btn-play-ball { border-bottom: 4px solid #10b981; }
+    .btn-bedtime { border-bottom: 4px solid #8b5cf6; }
+
+    /* Hinglish Talk & Input Bar */
+    .talk-card {
+      background: var(--card-bg-day);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    body.night-mode .talk-card {
+      background: var(--card-bg-night);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .text-input {
+      flex: 1;
+      padding: 12px 18px;
+      border-radius: 28px;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      background: #ffffff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: inherit;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    body.night-mode .text-input {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .text-input:focus {
+      border-color: var(--accent-pink);
+      box-shadow: 0 0 0 3px rgba(255, 64, 113, 0.2);
+    }
+
+    .btn-speak {
+      background: linear-gradient(135deg, var(--accent-pink), #ff5277);
+      color: #fff;
+      border: none;
+      border-radius: 28px;
+      padding: 0 20px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(255, 64, 113, 0.3);
+    }
+
+    .btn-speak:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-speak:active {
+      transform: scale(0.96);
+    }
+
+    /* Preset Hinglish Buttons */
+    .hinglish-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .hinglish-chips::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip-btn {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 7px 12px;
+      border-radius: 16px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      transition: all 0.15s;
+    }
+
+    body.night-mode .chip-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .chip-btn:hover {
+      background: rgba(255, 64, 113, 0.15);
+      color: var(--accent-pink);
+    }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+      opacity: 0.8;
+      padding: 12px 4px 4px 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="particle-holder" id="particleHolder"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="branding">
+        <h1 class="brand-title">🐱 WhiskerPal</h1>
+        <span class="brand-tagline">Hinglish Talking Tom</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- Mic Toggle Button -->
+        <button class="btn-mic-toggle" id="micToggleBtn" title="Toggle Live Mic Listening">
+          <span id="micIcon">🎙️</span>
+          <span id="micLabel">Mic On</span>
+        </button>
+
+        <!-- Night Mode Toggle -->
+        <button class="icon-btn" id="nightToggleBtn" title="Day/Night Mode">🌙</button>
+
+        <!-- Sound FX / Voice Toggle -->
+        <button class="icon-btn" id="audioToggleBtn" title="Toggle Sound">🔊</button>
+      </div>
+    </header>
+
+    <!-- Main Game Grid -->
+    <main class="game-grid">
+      <!-- Pet Stage -->
+      <section class="pet-stage" id="petStage">
+        <!-- Speech Bubble -->
+        <div class="speech-bubble" id="speechBubble" role="status" aria-live="polite">
+          <span id="speechText">Arre bhai! Kya bol raha hai? Mic on karo ya type karo!</span>
+          <div class="listening-status" id="listeningStatus">
+            <div class="listening-wave">
+              <span></span><span></span><span></span>
+            </div>
+            <span>Sun raha hoon... Bolo!</span>
+          </div>
+        </div>
+
+        <!-- Interactive Tom Character -->
+        <div class="character-wrap" id="characterWrap">
+          <div class="tom-character" id="tomCharacter">
+            <!-- 1. HEAD ZONE (Slap / Poke) -->
+            <div class="zone-head" id="headZone" data-hint="Slap Head 💥" title="Click Head to Slap/Poke!">
+              <div class="tom-face" id="tomFace">🐱</div>
+            </div>
+
+            <!-- 2. TUMMY ZONE (Rub / Pet) -->
+            <div class="zone-tummy" id="tummyZone" data-hint="Rub Belly ❤️" title="Rub / Click Belly to Pet!">
+              <div class="tummy-patch">❤️</div>
+            </div>
+
+            <!-- 3. FEET ZONE (Tickle / Jump) -->
+            <div class="zone-feet" id="feetZone" data-hint="Tickle Paws 🐾" title="Click Paws to Tickle!">
+              <span class="foot-paw">🐾</span>
+              <span class="foot-paw">🐾</span>
+            </div>
+          </div>
+          <div class="shadow-oval"></div>
+        </div>
+
+        <!-- Football Mini-Game Overlay -->
+        <div class="football-field" id="footballField">
+          <div class="mini-goal">🥅 GOAL POST 🥅</div>
+          <div class="football-item" id="footballItem" title="Tap ball to shoot Goal!">⚽</div>
+          <button class="chip-btn" id="closeGameBtn" style="background: rgba(255,255,255,0.85);">Done Playing ✖️</button>
+        </div>
+      </section>
+
+      <!-- Controls Panel -->
+      <section class="controls-panel">
+        <!-- Status Meters -->
+        <div class="status-card">
+          <div class="meter-row">
+            <div class="meter-label">🥛 Milk / Food</div>
+            <div class="meter-track">
+              <div class="meter-fill fill-milk" id="hungerFill" style="width: 80%;"></div>
+            </div>
+            <div class="meter-val" id="hungerVal">80%</div>
+          </div>
+
+          <div class="meter-row">
+            <div class="meter-label">💖 Happiness</div>
+            <div class="meter-track">
+              <div class="meter-fill fill-happy" id="happyFill" style="width: 85%;"></div>
+            </div>
+            <div class="meter-val" id="happyVal">85%</div>
+          </div>
+
+          <div class="meter-row">
+            <div class="meter-label">⚡ Energy</div>
+            <div class="meter-track">
+              <div class="meter-fill fill-energy" id="energyFill" style="width: 90%;"></div>
+            </div>
+            <div class="meter-val" id="energyVal">90%</div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions-grid">
+          <button class="action-btn btn-feed-milk" id="feedMilkBtn" aria-label="Feed Milk">
+            <span class="btn-ico">🥛</span>
+            <span>Feed Milk</span>
+          </button>
+
+          <button class="action-btn btn-pet-tummy" id="petTummyBtn" aria-label="Pet Tummy">
+            <span class="btn-ico">❤️</span>
+            <span>Pet Tummy</span>
+          </button>
+
+          <button class="action-btn btn-play-ball" id="playBallBtn" aria-label="Play Football">
+            <span class="btn-ico">⚽</span>
+            <span>Play Game</span>
+          </button>
+
+          <button class="action-btn btn-bedtime" id="bedtimeBtn" aria-label="Bedtime / Sleep">
+            <span class="btn-ico">💤</span>
+            <span id="bedtimeLabel">Bedtime</span>
+          </button>
+        </div>
+
+        <!-- Talking Tom Speech / Input Bar -->
+        <div class="talk-card">
+          <div class="input-row">
+            <input 
+              type="text" 
+              class="text-input" 
+              id="chatInput" 
+              placeholder="Kuch bolo ya type karo..." 
+              maxlength="100" 
+              autocomplete="off"
+            />
+            <button class="btn-speak" id="speakBtn">Say It 🗣️</button>
+          </div>
+
+          <!-- Quick Hinglish Dialogue Chips -->
+          <div class="hinglish-chips">
+            <span class="chip-btn" data-msg="Arre bhai! Kya bol raha hai?">Arre bhai!</span>
+            <span class="chip-btn" data-msg="Wah beta, kya baat hai!">Wah beta!</span>
+            <span class="chip-btn" data-msg="Doodh pilao mujhe, bohot bhook lagi hai!">Doodh pilao!</span>
+            <span class="chip-btn" data-msg="Maza aa gaya yaar!">Maza aa gaya!</span>
+            <span class="chip-btn" data-msg="Ouch! Pyaar se chhuo yaar, maaro mat!">Pyaar se chhuo!</span>
+            <span class="chip-btn" data-msg="Mujhe neend aa rahi hai...">Neend aa rahi hai</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>Status: <span id="currentStatus">Awake & Ready</span></div>
+      <div>Interactive Touch: Head (Slap) • Tummy (Pet) • Feet (Tickle)</div>
+    </footer>
+  </div>
+
+  <script>
+    /* ====================================================================
+       WhiskerPal: Hinglish Talking Tom Game Engine
+       Web Audio Synthesizer + Web Speech API Recognition + Squeaky TTS
+       ==================================================================== */
+    (function () {
+      // Game State
+      const state = {
+        hunger: 80,       // Milk / Hunger 0 - 100
+        happiness: 85,    // 0 - 100
+        energy: 90,       // 0 - 100
+        isSleeping: false,
+        isListening: false,
+        soundEnabled: true,
+        nightMode: false,
+        isTalking: false
+      };
+
+      // DOM Elements
+      const tomCharacter = document.getElementById('tomCharacter');
+      const tomFace = document.getElementById('tomFace');
+      const headZone = document.getElementById('headZone');
+      const tummyZone = document.getElementById('tummyZone');
+      const feetZone = document.getElementById('feetZone');
+      const speechBubble = document.getElementById('speechBubble');
+      const speechText = document.getElementById('speechText');
+      const listeningStatus = document.getElementById('listeningStatus');
+      const particleHolder = document.getElementById('particleHolder');
+      const hungerFill = document.getElementById('hungerFill');
+      const happyFill = document.getElementById('happyFill');
+      const energyFill = document.getElementById('energyFill');
+      const hungerVal = document.getElementById('hungerVal');
+      const happyVal = document.getElementById('happyVal');
+      const energyVal = document.getElementById('energyVal');
+      const feedMilkBtn = document.getElementById('feedMilkBtn');
+      const petTummyBtn = document.getElementById('petTummyBtn');
+      const playBallBtn = document.getElementById('playBallBtn');
+      const bedtimeBtn = document.getElementById('bedtimeBtn');
+      const bedtimeLabel = document.getElementById('bedtimeLabel');
+      const micToggleBtn = document.getElementById('micToggleBtn');
+      const micIcon = document.getElementById('micIcon');
+      const micLabel = document.getElementById('micLabel');
+      const chatInput = document.getElementById('chatInput');
+      const speakBtn = document.getElementById('speakBtn');
+      const nightToggleBtn = document.getElementById('nightToggleBtn');
+      const audioToggleBtn = document.getElementById('audioToggleBtn');
+      const currentStatus = document.getElementById('currentStatus');
+      const footballField = document.getElementById('footballField');
+      const footballItem = document.getElementById('footballItem');
+      const closeGameBtn = document.getElementById('closeGameBtn');
+      const chips = document.querySelectorAll('.chip-btn[data-msg]');
+
+      /* ------------------------------------------------------------------
+         1. Web Audio API Procedural Sound Synthesizer (Zero external files)
+         ------------------------------------------------------------------ */
+      let audioCtx = null;
+      function getAudioContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      // Slap / Punch Impact sound
+      function playSlapSound() {
+        if (!state.soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.18);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.18);
+      }
+
+      // Purr vibration sound
+      function playPurrSound() {
+        if (!state.soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        [0, 0.08, 0.16, 0.24].forEach((t, i) => {
+          setTimeout(() => {
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140 + (i % 2) * 20, ctx.currentTime);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.07);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.07);
+          }, t * 1000);
+        });
+      }
+
+      // Milk drinking / gulp sound
+      function playDrinkSound() {
+        if (!state.soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        [480, 560, 620].forEach((freq, idx) => {
+          setTimeout(() => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+          }, idx * 120);
+        });
+      }
+
+      // Spring Boing / Tickle Jump sound
+      function playBoingSound() {
+        if (!state.soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(780, ctx.currentTime + 0.28);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.28);
+      }
+
+      // Football Kick & Goal sound
+      function playKickSound() {
+        if (!state.soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(160, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+
+        // Cheerful fanfare
+        setTimeout(() => {
+          [523.25, 659.25, 783.99, 1046.5].forEach((note, i) => {
+            setTimeout(() => {
+              const o = ctx.createOscillator();
+              const g = ctx.createGain();
+              o.type = 'sine';
+              o.frequency.setValueAtTime(note, ctx.currentTime);
+              g.gain.setValueAtTime(0.18, ctx.currentTime);
+              g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+              o.connect(g);
+              g.connect(ctx.destination);
+              o.start();
+              o.stop(ctx.currentTime + 0.18);
+            }, i * 70);
+          });
+        }, 120);
+      }
+
+      // Mic Beep Chimes
+      function playChime(isStart) {
+        if (!state.soundEnabled) return;
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const freqs = isStart ? [440, 660, 880] : [880, 660, 440];
+        freqs.forEach((f, i) => {
+          setTimeout(() => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, ctx.currentTime);
+            gain.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.09);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.09);
+          }, i * 60);
+        });
+      }
+
+      /* ------------------------------------------------------------------
+         2. High-Pitched Squeaky Voice & Hinglish TTS
+         ------------------------------------------------------------------ */
+      let preferredIndianVoice = null;
+      function pickVoices() {
+        if ('speechSynthesis' in window) {
+          const list = window.speechSynthesis.getVoices();
+          // Prefer Hindi/Indian English voice for natural Hinglish
+          preferredIndianVoice = list.find(v => v.lang === 'hi-IN' || v.lang === 'en-IN') ||
+                                 list.find(v => v.lang.startsWith('en')) ||
+                                 list[0] || null;
+        }
+      }
+      if ('speechSynthesis' in window) {
+        pickVoices();
+        window.speechSynthesis.onvoiceschanged = pickVoices;
+      }
+
+      function speakHinglish(text) {
+        if (!text || !text.trim()) return;
+
+        // Clean emojis for clean TTS
+        const cleanText = text.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/gu, '').trim();
+
+        // Android Bridge Check
+        if (window.AndroidTTS && typeof window.AndroidTTS.speak === 'function') {
+          if (state.soundEnabled) {
+            window.AndroidTTS.speak(cleanText);
+            animateTalking(text.length * 75);
+          }
+          return;
+        }
+
+        // Web SpeechSynthesis
+        if (!state.soundEnabled || !('speechSynthesis' in window)) {
+          return;
+        }
+
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          
+          // Signature Squeaky Talking Tom pitch & rate
+          utterance.pitch = 1.6; // High squeaky Talking Tom pitch
+          utterance.rate = 1.14;  // Slightly snappy comic speed
+          
+          if (preferredIndianVoice) {
+            utterance.voice = preferredIndianVoice;
+          }
+
+          utterance.onstart = () => {
+            animateTalking(1500);
+          };
+
+          utterance.onend = () => {
+            stopTalking();
+          };
+
+          utterance.onerror = () => {
+            stopTalking();
+          };
+
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.warn('TTS error:', e);
+        }
+      }
+
+      function animateTalking(duration = 1000) {
+        state.isTalking = true;
+        tomCharacter.classList.add('talking');
+        if (!state.isSleeping) {
+          tomFace.textContent = '😸';
+        }
+        setTimeout(() => {
+          stopTalking();
+        }, duration);
+      }
+
+      function stopTalking() {
+        state.isTalking = false;
+        tomCharacter.classList.remove('talking');
+        if (!state.isSleeping) {
+          updateFaceByState();
+        }
+      }
+
+      function say(text, shouldSpeak = true) {
+        speechText.textContent = text;
+        speechBubble.style.transform = 'scale(1.06)';
+        setTimeout(() => {
+          speechBubble.style.transform = 'scale(1)';
+        }, 180);
+
+        if (shouldSpeak) {
+          speakHinglish(text);
+        }
+      }
+
+      /* ------------------------------------------------------------------
+         3. Web Speech Recognition: Listening & Repeating Tom
+         ------------------------------------------------------------------ */
+      let recognition = null;
+      const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      function initSpeechRecognition() {
+        if (!SpeechRecognitionClass) return null;
+        try {
+          const rec = new SpeechRecognitionClass();
+          rec.continuous = false;
+          rec.interimResults = false;
+          rec.lang = 'en-IN'; // Works great for Indian English / Hinglish
+
+          rec.onstart = () => {
+            state.isListening = true;
+            listeningStatus.classList.add('active');
+            micToggleBtn.classList.add('active');
+            micLabel.textContent = 'Listening...';
+            currentStatus.textContent = 'Tom is listening to you!';
+            playChime(true);
+          };
+
+          rec.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            if (transcript) {
+              playChime(false);
+              // Repeat what user said in signature squeaky voice!
+              say(`"${transcript}"`, true);
+              spawnParticles('🗣️', 5);
+              state.happiness = clamp(state.happiness + 5);
+              updateUI();
+            }
+          };
+
+          rec.onerror = (event) => {
+            console.warn('Speech recognition error:', event.error);
+            stopListeningUI();
+            if (event.error === 'not-allowed') {
+              say("Mic permission denied! Niche text box me type karo yaar!", false);
+            }
+          };
+
+          rec.onend = () => {
+            stopListeningUI();
+          };
+
+          return rec;
+        } catch (e) {
+          console.warn('SpeechRecognition init error:', e);
+          return null;
+        }
+      }
+
+      function toggleMic() {
+        getAudioContext();
+        if (!recognition) {
+          recognition = initSpeechRecognition();
+        }
+
+        if (!recognition) {
+          say("Browser me Speech Recognition support nahi hai! Niche type karo, Tom repeat karega!", true);
+          chatInput.focus();
+          return;
+        }
+
+        if (state.isListening) {
+          try { recognition.stop(); } catch(e) {}
+          stopListeningUI();
+        } else {
+          if (state.isSleeping) {
+            wakeUp();
+          }
+          try {
+            recognition.start();
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      }
+
+      function stopListeningUI() {
+        state.isListening = false;
+        listeningStatus.classList.remove('active');
+        micToggleBtn.classList.remove('active');
+        micLabel.textContent = 'Mic On';
+        currentStatus.textContent = state.isSleeping ? 'Snoozing...' : 'Awake & Ready';
+      }
+
+      /* ------------------------------------------------------------------
+         4. Body Touch Reactions (Slap, Pet Tummy, Paws)
+         ------------------------------------------------------------------ */
+      function clamp(val, min = 0, max = 100) {
+        return Math.max(min, Math.min(max, Math.round(val)));
+      }
+
+      function triggerAnimation(className, duration = 600) {
+        tomCharacter.classList.remove('slapped', 'purring', 'jumped');
+        void tomCharacter.offsetWidth; // reflow
+        tomCharacter.classList.add(className);
+        setTimeout(() => {
+          if (!state.isSleeping) {
+            tomCharacter.classList.remove(className);
+          }
+        }, duration);
+      }
+
+      function spawnParticles(emoji, count = 5) {
+        const rect = tomCharacter.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+
+        for (let i = 0; i < count; i++) {
+          const el = document.createElement('span');
+          el.className = 'fx-item';
+          el.textContent = emoji;
+          const dx = (Math.random() - 0.5) * 160 + 'px';
+          el.style.setProperty('--dx', dx);
+          el.style.left = (startX - 20 + (Math.random() - 0.5) * 60) + 'px';
+          el.style.top = (startY - 20 + (Math.random() - 0.5) * 50) + 'px';
+          particleHolder.appendChild(el);
+          setTimeout(() => el.remove(), 1300);
+        }
+      }
+
+      // 1. HEAD SLAP / POKE
+      function slapHead() {
+        getAudioContext();
+        if (state.isSleeping) {
+          wakeUp();
+          say("Arre yaar! Sone to do! Kyu utha diya?", true);
+          return;
+        }
+
+        playSlapSound();
+        triggerAnimation('slapped', 550);
+        tomFace.textContent = '😵';
+        spawnParticles('💥', 4);
+        spawnParticles('⭐', 3);
+
+        const slapPhrases = [
+          "Ouch! Pyaar se chhuo yaar, maaro mat!",
+          "Arre Ouch! Dhyan se!",
+          "Arre bhai! Dimaag pe kyu maar rahe ho?",
+          "Bohot zor se laga yaar! Aisa mat karo!",
+          "Dhyan se! Tom ki shakal bigad doge kya?"
+        ];
+        const phrase = slapPhrases[Math.floor(Math.random() * slapPhrases.length)];
+        say(phrase, true);
+
+        state.happiness = clamp(state.happiness - 10);
+        updateUI();
+
+        setTimeout(() => {
+          if (!state.isSleeping) {
+            updateFaceByState();
+          }
+        }, 800);
+      }
+
+      // 2. PET TUMMY
+      function petTummy() {
+        getAudioContext();
+        if (state.isSleeping) {
+          wakeUp();
+        }
+
+        playPurrSound();
+        triggerAnimation('purring', 600);
+        tomFace.textContent = '😻';
+        spawnParticles('❤️', 5);
+        spawnParticles('✨', 3);
+
+        const purrPhrases = [
+          "Aha! Purrr... Boht accha laga!",
+          "Maza aa gaya yaar! Aise hi sehlaate raho!",
+          "Purrrr! Tu mera best dost hai bhai!",
+          "Wah bhai wah! Tummy scratch is the best!"
+        ];
+        const phrase = purrPhrases[Math.floor(Math.random() * purrPhrases.length)];
+        say(phrase, true);
+
+        state.happiness = clamp(state.happiness + 15);
+        updateUI();
+
+        setTimeout(() => {
+          if (!state.isSleeping) {
+            updateFaceByState();
+          }
+        }, 900);
+      }
+
+      // 3. FEET / TAIL TICKLE & JUMP
+      function tickleFeet() {
+        getAudioContext();
+        if (state.isSleeping) {
+          wakeUp();
+        }
+
+        playBoingSound();
+        triggerAnimation('jumped', 650);
+        tomFace.textContent = '😹';
+        spawnParticles('🐾', 5);
+
+        const jumpPhrases = [
+          "Hehe! Gudgudi mat karo bhai, hassi aa rahi hai!",
+          "Wheee! Kya jump maari Tom ne!",
+          "Arre mere panje chhod do! Gudgudi ho rahi hai!"
+        ];
+        const phrase = jumpPhrases[Math.floor(Math.random() * jumpPhrases.length)];
+        say(phrase, true);
+
+        state.happiness = clamp(state.happiness + 8);
+        updateUI();
+
+        setTimeout(() => {
+          if (!state.isSleeping) {
+            updateFaceByState();
+          }
+        }, 850);
+      }
+
+      /* ------------------------------------------------------------------
+         5. Action Buttons: Feed Milk, Football Mini-game, Bedtime
+         ------------------------------------------------------------------ */
+
+      // Feed Milk
+      function feedMilk() {
+        getAudioContext();
+        if (state.isSleeping) {
+          wakeUp();
+        }
+
+        if (state.hunger >= 98) {
+          say("Pet full hai boss! Aur doodh nahi pi sakta!", true);
+          return;
+        }
+
+        playDrinkSound();
+        triggerAnimation('purring', 500);
+        tomFace.textContent = '😋';
+        spawnParticles('🥛', 4);
+
+        const milkPhrases = [
+          "Doodh pi liya! Maza aa gaya yaar!",
+          "Slurp slurp! Ekdum creamy and tasty doodh!",
+          "Wah beta! Ab Tom ki body banegi!"
+        ];
+        const phrase = milkPhrases[Math.floor(Math.random() * milkPhrases.length)];
+        say(phrase, true);
+
+        state.hunger = clamp(state.hunger + 25);
+        state.happiness = clamp(state.happiness + 6);
+        updateUI();
+
+        setTimeout(() => {
+          if (!state.isSleeping) updateFaceByState();
+        }, 800);
+      }
+
+      // Play Football Mini-Game
+      function startFootballGame() {
+        getAudioContext();
+        if (state.isSleeping) wakeUp();
+
+        if (state.energy <= 20) {
+          say("Mujhe neend aa rahi hai... football khelne ki energy nahi bachi!", true);
+          return;
+        }
+
+        footballField.classList.add('active');
+        say("Aao football khele! Ball ko tap karke GOAL maaro!", true);
+      }
+
+      function shootBall() {
+        playKickSound();
+        triggerAnimation('jumped', 600);
+        tomFace.textContent = '😎';
+        spawnParticles('⚽', 4);
+        spawnParticles('🎉', 5);
+
+        const goalPhrases = [
+          "GOAL! Wah beta, kya baat hai!",
+          "Khatarnak shot! Ball seedha net me!",
+          "Maza aa gaya yaar! Kya header mara!"
+        ];
+        const phrase = goalPhrases[Math.floor(Math.random() * goalPhrases.length)];
+        say(phrase, true);
+
+        state.energy = clamp(state.energy - 15);
+        state.happiness = clamp(state.happiness + 20);
+        state.hunger = clamp(state.hunger - 10);
+        updateUI();
+      }
+
+      function closeFootballGame() {
+        footballField.classList.remove('active');
+        say("Mast match tha! Ab aage kya kare?", true);
+      }
+
+      // Bedtime / Sleep
+      function toggleBedtime() {
+        getAudioContext();
+        if (state.isSleeping) {
+          wakeUp();
+          say("Good morning! Tom ki battery full charge ho gayi!", true);
+        } else {
+          putToBed();
+        }
+      }
+
+      function putToBed() {
+        state.isSleeping = true;
+        bedtimeLabel.textContent = 'Wake Up';
+        tomFace.textContent = '😴';
+        tomCharacter.classList.add('sleeping-anim');
+        document.body.classList.add('night-mode');
+        say("Zzzz... Tom so raha hai. Shanti se sone do!", false);
+        currentStatus.textContent = 'Snoozing peacefully...';
+        spawnParticles('💤', 4);
+        updateUI();
+      }
+
+      function wakeUp() {
+        state.isSleeping = false;
+        bedtimeLabel.textContent = 'Bedtime';
+        tomCharacter.classList.remove('sleeping-anim');
+        if (!state.nightMode) {
+          document.body.classList.remove('night-mode');
+        }
+        currentStatus.textContent = 'Awake & Ready';
+        updateUI();
+      }
+
+      /* ------------------------------------------------------------------
+         6. Text Input & Hinglish Response Fallback
+         ------------------------------------------------------------------ */
+      function handleTextSpeak() {
+        getAudioContext();
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        chatInput.value = '';
+        if (state.isSleeping) wakeUp();
+
+        // Repeat user text in squeaky Talking Tom voice!
+        say(`"${text}"`, true);
+        state.happiness = clamp(state.happiness + 6);
+        updateUI();
+      }
+
+      /* ------------------------------------------------------------------
+         7. UI Synchronization & Life Loop
+         ------------------------------------------------------------------ */
+      function updateFaceByState() {
+        if (state.isSleeping) {
+          tomFace.textContent = '😴';
+        } else if (state.happiness >= 90) {
+          tomFace.textContent = '😻';
+        } else if (state.energy <= 22) {
+          tomFace.textContent = '🥱';
+        } else if (state.hunger <= 25) {
+          tomFace.textContent = '😿';
+        } else if (state.happiness <= 30) {
+          tomFace.textContent = '😾';
+        } else {
+          tomFace.textContent = '🐱';
+        }
+      }
+
+      function updateUI() {
+        hungerFill.style.width = state.hunger + '%';
+        happyFill.style.width = state.happiness + '%';
+        energyFill.style.width = state.energy + '%';
+
+        hungerVal.textContent = state.hunger + '%';
+        happyVal.textContent = state.happiness + '%';
+        energyVal.textContent = state.energy + '%';
+
+        if (!state.isTalking) {
+          updateFaceByState();
+        }
+      }
+
+      // Background Decay & Recovery Cycle
+      setInterval(() => {
+        if (state.isSleeping) {
+          state.energy = clamp(state.energy + 5);
+          state.hunger = clamp(state.hunger - 0.4);
+          if (Math.random() > 0.5) spawnParticles('💤', 2);
+          if (state.energy >= 100) {
+            wakeUp();
+            say("Energy 100%! Tom full ready hai masti ke liye!", true);
+          }
+        } else {
+          state.hunger = clamp(state.hunger - 0.8);
+          state.energy = clamp(state.energy - 0.6);
+          state.happiness = clamp(state.happiness - 0.5);
+
+          // Low energy yawn trigger
+          if (state.energy <= 22 && Math.random() < 0.25) {
+            tomFace.textContent = '🥱';
+            say("Mujhe neend aa rahi hai... Bedtime dabao na!", true);
+          } else if (state.hunger <= 20 && Math.random() < 0.25) {
+            say("Doodh pilao mujhe, bohot bhook lagi hai!", true);
+          }
+        }
+        updateUI();
+      }, 3500);
+
+      /* ------------------------------------------------------------------
+         8. Event Listeners
+         ------------------------------------------------------------------ */
+      // Body Hitbox Events
+      headZone.addEventListener('click', slapHead);
+      tummyZone.addEventListener('click', petTummy);
+      feetZone.addEventListener('click', tickleFeet);
+
+      // Buttons
+      feedMilkBtn.addEventListener('click', feedMilk);
+      petTummyBtn.addEventListener('click', petTummy);
+      playBallBtn.addEventListener('click', startFootballGame);
+      bedtimeBtn.addEventListener('click', toggleBedtime);
+      micToggleBtn.addEventListener('click', toggleMic);
+
+      // Football Game
+      footballItem.addEventListener('click', shootBall);
+      closeGameBtn.addEventListener('click', closeFootballGame);
+
+      // Chat & Input
+      speakBtn.addEventListener('click', handleTextSpeak);
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleTextSpeak();
+      });
+
+      // Hinglish preset chips
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          getAudioContext();
+          const phrase = chip.getAttribute('data-msg');
+          say(phrase, true);
+        });
+      });
+
+      // Night & Audio Toggles
+      nightToggleBtn.addEventListener('click', () => {
+        state.nightMode = !state.nightMode;
+        if (state.nightMode) {
+          document.body.classList.add('night-mode');
+          nightToggleBtn.textContent = '☀️';
+        } else {
+          if (!state.isSleeping) document.body.classList.remove('night-mode');
+          nightToggleBtn.textContent = '🌙';
+        }
+      });
+
+      audioToggleBtn.addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        audioToggleBtn.textContent = state.soundEnabled ? '🔊' : '🔇';
+        if (!state.soundEnabled && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+      });
+
+      // Initial Intro
+      setTimeout(() => {
+        say("Arre bhai! Kya bol raha hai? Mic on karo aur bolo!", true);
+        updateUI();
+      }, 600);
+
+    })();
+  </script>
+</body>
+</html>
